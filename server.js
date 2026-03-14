@@ -15,35 +15,45 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors());
+// ✅ IMPORTANT: Configure CORS to allow your Vercel frontend
+app.use(cors({
+    origin: ['https://frontend-gamma-lyart-12.vercel.app/', 'http://localhost:3000'],
+    credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * 1. SERVE UPLOADS DIRECTORY (The Fix)
- * This tells Express: "If a request starts with /uploads, 
- * look inside the local 'uploads' folder for that file."
+ * 1. SERVE UPLOADS DIRECTORY (Keep this if needed)
  */
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-/**
- * 2. STATIC DIRECTORY (Frontend)
- * Serves the 'frontend' folder as the root (/).
- */
-app.use(express.static(path.join(__dirname, '../frontend')));
+// ❌ REMOVE this line - frontend is on Vercel, not Render
+// app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Health Check for presentation
+// Health Check
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'Connected', 
         timestamp: new Date(), 
-        engine: 'Llama 3 via Featherless' // Updated for your new AI pivot!
+        engine: 'Llama 3 via Featherless'
+    });
+});
+
+// ✅ Simple root response for API
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'CropAI Backend API',
+        status: 'running',
+        endpoints: {
+            health: '/api/health',
+            api: '/api/*'
+        }
     });
 });
 
 app.use('/api', apiRoutes);
-
-app.get('/', (req, res) => res.redirect('/index.html'));
 
 const PORT = process.env.PORT || 5000;
 connectDBs().then(() => {
